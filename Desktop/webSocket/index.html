@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Chat</title>
+	<link rel="stylesheet" href="./style/style.css">
+</head>
+
+<body>
+	<div class="wrap__chat">
+		<div class="chat__header">
+			<img src="./image/logo.png" alt="logo" class="logo">
+			<p>WebSocket chat</p>
+		</div>
+
+
+		<div class="chat__body">
+			<div id="chat" class="message__wrap">
+				<!-- Вывод чата -->
+				<!-- <p>hello</p> -->
+			</div>
+		</div>
+
+		<form id="message-Form" class="form">
+			<input type="text" class="form__input" id="message-input" placeholder="type a message">
+			<button class="form__button" type="submit" id="send-message">send</button>
+		</form>
+	</div>
+
+
+
+	<script type="module">
+		const chat = document.querySelector('#chat');
+		const messageForm = document.querySelector('#message-Form');
+		const inputMessage = document.querySelector('#message-input');
+
+
+		const socket = new WebSocket('ws://localhost:8080');
+
+		socket.addEventListener("message", ({ data }) => {
+			const { type, message } = JSON.parse(data);
+			const messageText = document.createElement('p');
+
+			if (type === 'system') {
+				messageText.classList.add('message__system')
+			} else {
+				messageText.classList.add('message__style')
+			}
+			messageText.textContent = message;
+			chat.appendChild(messageText);
+			chat.scrollTop = chat.scrollHeight;
+		});
+
+		socket.onclose = (event) => {
+			if (event.wasClean) {
+				console.log(`Соединение закрыто чисто, код=${event.code} причина=${event.reason}`);
+			} else {
+				console.log("Соединение прервано");
+			}
+		}
+
+		// messageForm.addEventListener('submit', (event) => {
+		// 	event.preventDefault();
+		// 	const message = sendMessage.value;
+		// 	console.log(message)
+		// })
+
+		messageForm.addEventListener('submit', (event) => {
+			event.preventDefault();
+			if (inputMessage.value) {
+				const message = {
+					type: 'user',
+					message: inputMessage.value
+				}
+				socket.send(JSON.stringify(message));
+				inputMessage.value = '';
+			}
+		})
+
+	</script>
+</body>
+
+</html>
